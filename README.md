@@ -28,7 +28,7 @@ icon_url = "https://example.com/wazuh.png"
 
 Example configs (Same indentation as the **global** snippet): \
 Change the **hook_url** and **api_key** (mandatory) and optionally the **level** and **rule_id**
-```
+```xml
   <integration>
     <name>custom-ntfy</name>
     <hook_url>https://ntfy.example.com/wazuh</hook_url>
@@ -43,5 +43,33 @@ Change the **hook_url** and **api_key** (mandatory) and optionally the **level**
     <api_key>VERYSECRETKEY</api_key>
     <alert_format>json</alert_format>
     <rule_id>504, 506, 503</rule_id>
+  </integration>
+```
+
+## Special features
+You can add option parameters to my script. \
+There are following options:
+- Exclude host from generating notifications (blacklist)
+- Only include mentioned hosts in notifications (whitelist)
+
+**Example**: All hosts should generate alerts at **level 9** except for **host-32** and **host-24**. Those should only trigger at **level 12**. Following config will do just that:
+
+```xml
+  <integration>
+    <name>custom-ntfy</name>
+    <hook_url>https://ntfy.example.com/wazuh</hook_url>
+    <api_key>VERYSECRETKEY</api_key>
+    <alert_format>json</alert_format>
+    <level>9</level>
+    <options>{"agentname_exclusion": ["host-32","host-24"]}</options>
+  </integration>
+
+  <integration>
+    <name>custom-ntfy</name>
+    <hook_url>https://ntfy.example.com/wazuh</hook_url>
+    <api_key>VERYSECRETKEY</api_key>
+    <alert_format>json</alert_format>
+    <level>12</level>
+    <options>{"agentname_inclusion": ["host-32","host-24"]}</options>
   </integration>
 ```
