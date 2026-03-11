@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+
+import sys
+import json
+import requests
+
+# User setting
+icon_url = None
+
+# Read configuration parameters
+alert_file = open(sys.argv[1])
+api_key = sys.argv[2]
+hook_url = sys.argv[3]
+
+# Find options
+options = {}
+for arg in sys.argv[4:]:
+    if arg.endswith(".options"):
+        # WITH AUTO CLOSES FILES
+        with open(arg) as f:
+            options = json.load(f)
+        break
+
+# Read the alert file
+alert_json = json.load(alert_file)
+alert_file.close()
+
+# Content
+alert_level = alert_json['rule']['level']
+ruleid = alert_json['rule']['id']
+description = alert_json['rule']['description']
+agentid = alert_json['agent']['id']
+agentname = alert_json['agent']['name']
+path = alert_json.get('syscheck', {}).get('path', 'N/A')
+# Custom -> <options>{"agentname_exclusion": ["HOSTNAME","HOSTNAME2"]}</options>
+agentname_exclusion = options.get('agentname_exclusion') # Value is 'None' if empty
+agentid_exclusion = options.get('agentid_exclusion') # Value is 'None' if empty
+agentname_inclusion = options.get('agentname_inclusion') # Value is 'None' if empty
+agentid_inclusion = options.get('agentid_inclusion') # Value is 'None' if empty
+
+# Eval for exclusion / inclusion
+if agentname_exclusion != None:
+    for i in agentname_exclusion:
+        if i == agentname:
+            sys.exit(0) # EXIT HERE
+
+if agentid_exclusion != None:
+    for i in agentid_exclusion:
+        if i == agentid:
+            sys.exit(0) # EXIT HERE
+
+if agentname_inclusion != None:
+    if agentname not in agentname_inclusion:
+        sys.exit(0) # EXIT HERE
+
+if agentid_inclusion != None:
+    if agentid not in agentid_inclusion:
+        sys.exit(0) # EXIT HERE
+
+# Eval severity
+if alert_level <= 11:
+    priority = 'default'
+    tags = 'shield'
+elif alert_level <= 14:
+    priority = 'high'
+    tags = 'shield,warning'
+else:
+    priority = 'urgent'
+    tags = 'shield,rotating_light'
+
+# Create message
+message = (
+    "- State: " + description + "\n"
+    "- Agent: " + str(agentid) + " **" + agentname + "**\n"
+    "- Rule ID: " + str(ruleid) + "\n"
+    "- Alert level: " + str(alert_level) + "\n"
+    "- FIM alert on [`" + path + "`]"
+)
+
+# Send message
+requests.post(hook_url,
+    data=message,
+    headers={
+        "Authorization": "Bearer " + api_key,
+        "Title": "Wazuh Alert - Rule " + str(ruleid),
+        "Priority": priority,
+        "Tags": tags,
+        "Icon": icon_url,
+        "Markdown": "yes"
+    }
+)
+
+sys.exit(0)
