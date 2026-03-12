@@ -1,5 +1,5 @@
 # wazuh-ntfy
-NTFY integration for Wazuh. notifiations
+NTFY integration for Wazuh. notifications
 - Create issues if you encounter bugs or have questions
 - If you have any improvements you can create a pr
 
