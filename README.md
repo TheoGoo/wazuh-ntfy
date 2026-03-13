@@ -49,8 +49,14 @@ Change the **hook_url** and **api_key** (mandatory) and optionally the **level**
 ## Special features
 You can add option parameters to my script. \
 There are following options:
-- Exclude host from generating notifications (blacklist)
-- Only include mentioned hosts in notifications (whitelist)
+- Exclude host from generating notifications (blacklist) \
+`<options>{"agentname_exclusion": ["host1","host2"]}</options>`
+- Exclude rule ids from generation notifications (blacklist) \
+`<options>{"ruleid_exclusion": ["1234","2345"]}</options>`
+- Only include mentioned hosts in notifications (whitelist) \
+`<options>{"agentname_inclusion": ["host1","host2"]}</options>`
+- Only include mentioned rule ids in notifications (whitelist) \
+`<options>{"ruleid_inclusion": ["1234","2345"]}</options>`
 
 **Example**: All hosts should generate alerts at **level 9** except for **host-32** and **host-24**. Those should only trigger at **level 12**. Following config will do just that:
 

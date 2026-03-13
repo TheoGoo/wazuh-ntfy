@@ -16,7 +16,6 @@ hook_url = sys.argv[3]
 options = {}
 for arg in sys.argv[4:]:
     if arg.endswith(".options"):
-        # WITH AUTO CLOSES FILES
         with open(arg) as f:
             options = json.load(f)
         break
@@ -32,29 +31,32 @@ description = alert_json['rule']['description']
 agentid = alert_json['agent']['id']
 agentname = alert_json['agent']['name']
 path = alert_json.get('syscheck', {}).get('path', 'N/A')
-# Custom -> <options>{"agentname_exclusion": ["HOSTNAME","HOSTNAME2"]}</options>
-agentname_exclusion = options.get('agentname_exclusion') # Value is 'None' if empty
-agentid_exclusion = options.get('agentid_exclusion') # Value is 'None' if empty
-agentname_inclusion = options.get('agentname_inclusion') # Value is 'None' if empty
-agentid_inclusion = options.get('agentid_inclusion') # Value is 'None' if empty
+
+# Arrays
+exclusions = [
+    [options.get('agentname_exclusion', []),agentname],
+    [options.get('agentid_exclusion', []),agentid],
+    [options.get('ruleid_exclusion', []),ruleid]
+]
+inclusions = [
+    [options.get('agentname_inclusion', []),agentname],
+    [options.get('agentid_inclusion', []),agentid],
+    [options.get('ruleid_inclusion', []),ruleid]
+]
 
 # Eval for exclusion / inclusion
-if agentname_exclusion != None:
-    for i in agentname_exclusion:
-        if i == agentname:
-            sys.exit(0) # EXIT HERE
 
-if agentid_exclusion != None:
-    for i in agentid_exclusion:
-        if i == agentid:
-            sys.exit(0) # EXIT HERE
+# exl[0][0] //value from options 1
+# exl[0][1] //value from options 2
+# exl[0][3] //value from options 3
+# exl[1] //value from alert
 
-if agentname_inclusion != None:
-    if agentname not in agentname_inclusion:
+for excl in exclusions:
+    if excl[1] in excl[0]:
         sys.exit(0) # EXIT HERE
 
-if agentid_inclusion != None:
-    if agentid not in agentid_inclusion:
+for incl in inclusions:
+    if incl[1] not in incl[0] and len(incl[0]):
         sys.exit(0) # EXIT HERE
 
 # Eval severity
@@ -78,7 +80,8 @@ message = (
 )
 
 # Send message
-requests.post(hook_url,
+requests.post(
+    hook_url,
     data=message,
     headers={
         "Authorization": "Bearer " + api_key,
